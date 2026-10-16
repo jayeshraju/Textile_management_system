@@ -21,7 +21,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://loomiq-backend-api.onrender.com/api/:path*"
+      "destination": "https://loomiq-api.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
