@@ -7,6 +7,8 @@
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "build:frontend": "npm --prefix frontend run build",
+    "build": "npm --prefix backend install",
+    "start": "npm --prefix backend start",
     "migrate:quality": "npm --prefix backend run migrate:quality",
     "create-owner": "npm --prefix backend run create-owner",
     "seed": "npm --prefix backend run seed",
