@@ -46,6 +46,17 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle MongoDB duplicate key error (code 11000)
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyPattern || {})[0] || 'record';
+    return res.status(409).json({
+      error: {
+        message: `A resource with that ${field} already exists`,
+        code: 'DUPLICATE_RESOURCE',
+      },
+    });
+  }
+
   // Default internal server error
   const statusCode = err.status || err.statusCode || 500;
   const message = err.message || 'An unexpected internal server error occurred';

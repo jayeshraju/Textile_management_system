@@ -1,56 +1,36 @@
-
 import React from 'react';
+import { PackageOpen } from 'lucide-react';
 
-export const StatusCard = ({ title, status, subtitle, badgeType = 'default', icon: Icon }) => {
-  const getBadgeStyles = () => {
-    switch (badgeType) {
-      case 'success':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-      case 'warning':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-      case 'danger':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
-      default:
-        return 'bg-slate-700/50 text-slate-300 border-slate-600';
-    }
-  };
-
-  const getDotStyles = () => {
-    switch (badgeType) {
-      case 'success':
-        return 'bg-emerald-400 animate-pulse';
-      case 'warning':
-        return 'bg-amber-400 animate-pulse';
-      case 'danger':
-        return 'bg-rose-400';
-      default:
-        return 'bg-slate-400';
-    }
-  };
+/**
+ * Universal EmptyState component for LoomIQ platform.
+ * Provides consistent empty state illustration, typography, and optional CTA button.
+ */
+export const EmptyState = ({
+  icon: Icon = PackageOpen,
+  title = 'No records found',
+  description = 'No items match your active filters or search criteria.',
+  message,
+  action,
+  className = '',
+}) => {
+  const desc = description || message;
 
   return (
-    <div className="bg-slate-800/80 border border-slate-700/70 rounded-xl p-5 shadow-lg backdrop-blur-sm transition-all duration-200 hover:border-slate-600">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-slate-400">{title}</span>
-        {Icon && (
-          <div className="p-2 rounded-lg bg-slate-700/50 text-slate-300">
-            <Icon className="w-5 h-5" />
-          </div>
-        )}
+    <div
+      className={`p-8 sm:p-12 text-center bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col items-center justify-center my-4 ${className}`}
+    >
+      <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200/80 text-slate-500 flex items-center justify-center mb-3.5 shadow-2xs">
+        <Icon className="w-6 h-6 text-slate-500" />
       </div>
-
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`w-2.5 h-2.5 rounded-full ${getDotStyles()}`} />
-        <span className="text-xl font-bold text-white tracking-tight">{status}</span>
-      </div>
-
-      {subtitle && (
-        <p className="text-xs text-slate-400 mt-2 border-t border-slate-700/40 pt-2">
-          {subtitle}
+      <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
+      {desc && (
+        <p className="text-xs text-slate-500 max-w-md mt-1 mb-4 leading-relaxed">
+          {desc}
         </p>
       )}
+      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 };
 
-export default StatusCard;
+export default EmptyState;

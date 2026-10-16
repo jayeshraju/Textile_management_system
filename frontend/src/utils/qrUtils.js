@@ -6,9 +6,8 @@
  * 3. Canonical Web URL: For browser navigation when explicitly desired.
  */
 
-// Fallback Online Tunnel and LAN IP
-export const DEFAULT_ONLINE_URL = 'https://approximate-nor-detailed-costa.trycloudflare.com';
-export const DEFAULT_LAN_IP = '172.17.51.121';
+// Fallback LAN IP for local Wi-Fi testing
+export const DEFAULT_LAN_IP = '192.168.1.100';
 
 /**
  * Builds human-readable item detail text for the QR code.
@@ -89,19 +88,9 @@ export const buildRollUrl = (rollId, customBaseUrl) => {
   }
 
   const envUrl = typeof import.meta !== 'undefined' && import.meta.env?.VITE_PUBLIC_APP_URL;
-  const origin = typeof window !== 'undefined' ? window.location?.origin : '';
+  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
 
-  let base = (customBaseUrl || envUrl || DEFAULT_ONLINE_URL || origin).trim();
-  
-  // If base is empty or loopback and we want cross-device scannability online
-  if (!base || base.includes('localhost') || base.includes('127.0.0.1')) {
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-      base = envUrl;
-    } else {
-      base = DEFAULT_ONLINE_URL;
-    }
-  }
-
+  const base = (customBaseUrl || envUrl || origin || 'http://localhost:5173').trim();
   const cleanBase = base.replace(/\/+$/, '');
   const normalizedRollId = rollId.trim().toUpperCase();
   return `${cleanBase}/rolls/${encodeURIComponent(normalizedRollId)}`;

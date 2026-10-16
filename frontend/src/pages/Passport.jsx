@@ -7,7 +7,7 @@ import { getMachines } from '../services/machineService';
 import StatusBadge from '../components/StatusBadge';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
-import { buildRollUrl, buildRollInfoText, buildRollJsonSpec, DEFAULT_LAN_IP, DEFAULT_ONLINE_URL } from '../utils/qrUtils';
+import { buildRollUrl, buildRollInfoText, buildRollJsonSpec, DEFAULT_LAN_IP } from '../utils/qrUtils';
 import { formatNumber, formatDate } from '../utils/formatters';
 import {
   ArrowLeft,
@@ -54,8 +54,8 @@ export const Passport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // QR Configuration state (Default: 'text' to show item info without opening a website)
-  const [qrContentMode, setQrContentMode] = useState('text'); // 'text' | 'url' | 'json'
+  // QR Configuration state (Default: 'url' to link to the digital fabric passport)
+  const [qrContentMode, setQrContentMode] = useState('url'); // 'url' | 'text' | 'json'
   const [selectedHostMode, setSelectedHostMode] = useState('online');
   const [customHostUrl, setCustomHostUrl] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
@@ -153,8 +153,7 @@ export const Passport = () => {
     if (selectedHostMode === 'online') {
       return (
         import.meta.env?.VITE_PUBLIC_APP_URL ||
-        DEFAULT_ONLINE_URL ||
-        (typeof window !== 'undefined' ? window.location.origin : '')
+        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
       );
     }
     if (selectedHostMode === 'lan') {
@@ -163,7 +162,7 @@ export const Passport = () => {
     if (selectedHostMode === 'custom' && customHostUrl.trim()) {
       return customHostUrl.trim();
     }
-    return typeof window !== 'undefined' ? window.location.origin : DEFAULT_ONLINE_URL;
+    return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
   };
 
   const rollInfoText = roll ? buildRollInfoText(roll) : '';
@@ -336,6 +335,35 @@ export const Passport = () => {
     );
   }
 
+  // 400 Malformed / Invalid Roll ID
+  if (error && (error.status === 400 || error.code === 'INVALID_ROLL_ID_FORMAT')) {
+    return (
+      <div className="max-w-xl mx-auto py-12 px-4 text-center space-y-6">
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 inline-block shadow-sm">
+          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Invalid Roll Identifier Format</h1>
+          <p className="text-xs font-mono text-slate-700 mt-2 bg-slate-100 py-1.5 px-3 rounded-lg inline-block border border-slate-200">
+            Scanned ID: <span className="text-amber-700 font-bold">{rollId}</span>
+          </p>
+          <p className="text-sm text-slate-600 mt-2">
+            The provided identifier is not a valid fabric roll ID format. Expected standard format e.g. <span className="font-mono font-semibold">FR-2026-000001</span>.
+          </p>
+        </div>
+        <div>
+          <Link
+            to="/rolls"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-teal-700 hover:text-teal-800"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Fabric Rolls Registry</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return <ErrorState title="Failed to load Fabric Passport" error={error} onRetry={fetchPassportAndConfig} />;
   }
@@ -399,6 +427,15 @@ export const Passport = () => {
       <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm print:hidden space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200/80 flex items-center gap-1.5 shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+                Digital Fabric Passport • Provenance Verified
+              </span>
+              <span className="text-[10px] font-mono text-slate-400">
+                Asset #{roll.rollId}
+              </span>
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-2xl md:text-3xl font-bold font-mono text-slate-900 tracking-tight flex items-center gap-2">
                 <QrCode className="w-7 h-7 text-teal-600" />
@@ -409,14 +446,95 @@ export const Passport = () => {
               <StatusBadge type="dispatch" value={roll.dispatchStatus} />
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Deterministic Stage Quality Gate Audit & Digital Fabric Passport
+              Tamper-evident shopfloor ledger tracking composition, physical inspections, and chain of custody
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:items-end gap-1">
             <span className="text-xs text-slate-500 font-mono">
               Stage Entered: {formatDate(roll.stageEnteredAt || roll.createdAt)}
             </span>
+            <span className="text-[10px] text-slate-400 font-mono">
+              Created: {formatDate(roll.createdAt)}
+            </span>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* FABRIC ROLL LIFECYCLE TIMELINE (SAFE BUILD FROM EXISTING RECORDS) */}
+        {/* ========================================================================= */}
+        <div className="bg-slate-50/90 p-5 rounded-2xl border border-slate-200/90 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-teal-600" />
+              <span>Digital Roll Lifecycle & Provenance Timeline</span>
+            </span>
+            <span className="text-[10px] font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200/60 font-semibold">
+              {(roll.inspections?.length || 0) + 2} Lifecycle Milestones
+            </span>
+          </div>
+
+          <div className="relative pl-6 space-y-3.5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+            {/* 1. Origin Milestone */}
+            <div className="relative">
+              <div className="absolute -left-6 top-0.5 w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px] font-bold ring-4 ring-white shadow-2xs">
+                ✓
+              </div>
+              <div className="text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <strong className="text-slate-900">1. Weaving Output & Passport Registration</strong>
+                  <span className="text-slate-400">•</span>
+                  <span className="font-mono text-slate-500">{formatDate(roll.createdAt)}</span>
+                </div>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Woven on Loom <strong className="font-mono text-slate-900">{roll.machine?.code || 'LM-01'}</strong> for Order <strong className="font-mono text-teal-700">{roll.order?.orderNumber || 'Standard'}</strong> ({formatNumber(roll.quantityMetres)} metres).
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Inspection Events */}
+            {(roll.inspections || []).map((insp, iIdx) => (
+              <div key={insp._id || iIdx} className="relative">
+                <div className={`absolute -left-6 top-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ring-4 ring-white shadow-2xs ${
+                  insp.result === 'PASS' ? 'bg-emerald-600 text-white' : insp.result === 'REWORK' ? 'bg-amber-500 text-white' : 'bg-rose-600 text-white'
+                }`}>
+                  {insp.result === 'PASS' ? '✓' : insp.result === 'REWORK' ? '↻' : '✕'}
+                </div>
+                <div className="text-xs">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <strong className="text-slate-900">Stage Gate {insp.stage || 'GREY'} Inspection</strong>
+                    <StatusBadge type="quality" value={insp.result} />
+                    <span className="text-slate-400">•</span>
+                    <span className="font-mono text-slate-500">{formatDate(insp.inspectedAt)}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Inspector: <span className="font-medium text-slate-800">{insp.inspectorName || 'Lead Inspector'}</span> — {insp.defectPoints || 0} defect pts ({insp.pointsPer100m || 0} pts/100m). {insp.defectNotes ? `Notes: "${insp.defectNotes}"` : 'Clean run.'}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {/* 3. Dispatch & Custody Status */}
+            <div className="relative">
+              <div className={`absolute -left-6 top-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ring-4 ring-white shadow-2xs ${
+                roll.dispatchStatus === 'DISPATCHED' ? 'bg-sky-600 text-white' : roll.dispatchStatus === 'READY_FOR_DISPATCH' ? 'bg-teal-600 text-white' : 'bg-slate-300 text-slate-700'
+              }`}>
+                {roll.dispatchStatus === 'DISPATCHED' ? '✓' : roll.dispatchStatus === 'READY_FOR_DISPATCH' ? '•' : '○'}
+              </div>
+              <div className="text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <strong className="text-slate-900">Chain of Custody & Dispatch Gateway</strong>
+                  <StatusBadge type="dispatch" value={roll.dispatchStatus} />
+                </div>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  {roll.dispatchStatus === 'DISPATCHED'
+                    ? 'Fabric roll securely shipped to buyer destination.'
+                    : roll.dispatchStatus === 'READY_FOR_DISPATCH'
+                    ? 'Quality certified. Staged at warehouse loading dock for dispatch.'
+                    : 'Roll currently staged in active shopfloor pipeline.'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

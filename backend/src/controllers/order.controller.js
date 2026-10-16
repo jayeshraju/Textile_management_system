@@ -309,12 +309,27 @@ const createOrder = async (req, res, next) => {
 
     let resolvedMachineId = null;
     if (assignedMachine) {
-      resolvedMachineId = assignedMachine;
+      const machine = await Machine.findById(assignedMachine);
+      if (!machine) {
+        return res.status(422).json({
+          error: {
+            message: `Machine with ID '${assignedMachine}' does not exist`,
+            code: 'MACHINE_NOT_FOUND',
+          },
+        });
+      }
+      resolvedMachineId = machine._id;
     } else if (machineCode) {
       const machine = await Machine.findOne({ code: machineCode.trim().toUpperCase() });
-      if (machine) {
-        resolvedMachineId = machine._id;
+      if (!machine) {
+        return res.status(422).json({
+          error: {
+            message: `Machine with code '${machineCode}' does not exist`,
+            code: 'MACHINE_NOT_FOUND',
+          },
+        });
       }
+      resolvedMachineId = machine._id;
     }
 
     const currentYear = new Date().getFullYear();

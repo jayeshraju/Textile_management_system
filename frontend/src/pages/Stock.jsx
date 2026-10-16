@@ -489,7 +489,7 @@ export const Stock = () => {
                     {summary.needsAttention.map((item) => (
                       <tr key={item._id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3.5 px-6">
-                          <StatusBadge status={item.stockLevel} />
+                          <StatusBadge type="stock" value={item.stockLevel} />
                         </td>
                         <td className="py-3.5 px-6">
                           <div className="font-semibold text-slate-900">{item.name}</div>
@@ -684,7 +684,7 @@ export const Stock = () => {
                         {item.supplier || '—'}
                       </td>
                       <td className="py-4 px-6">
-                        <StatusBadge status={item.stockLevel} />
+                        <StatusBadge type="stock" value={item.stockLevel} />
                       </td>
                       <td className="py-4 px-6 text-right space-x-1.5">
                         {/* Receive */}

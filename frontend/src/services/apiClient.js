@@ -30,11 +30,18 @@ export const request = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
+  const controller = new AbortController();
+  const timeoutMs = options.timeout || 60000; // 60s default timeout for free-tier cold starts
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(url, {
       credentials: 'include', // Include HttpOnly session cookies
       ...options,
       headers,
+      signal: options.signal || controller.signal,
+    }).finally(() => {
+      clearTimeout(timeoutId);
     });
 
     const data = await response.json().catch(() => null);
@@ -61,6 +68,11 @@ export const request = async (endpoint, options = {}) => {
 
     return data;
   } catch (err) {
+    if (err.name === 'AbortError') {
+      const timeoutErr = new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s. The backend may be waking up from sleep. Please retry.`);
+      timeoutErr.code = 'TIMEOUT';
+      throw timeoutErr;
+    }
     if (!err.status) {
       // Network failure / connection refused / CORS blocked
       const networkError = new Error(err.message || 'Unable to connect to backend service. Please check server status.');

@@ -184,19 +184,88 @@ export const RadarExplainPanel = () => {
           <ProgressBar percent={progressPercent} />
         </div>
 
-        {/* Reason Statement & Suggested Action */}
-        <div className="space-y-3 pt-2">
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-            <span className="font-bold text-slate-900">Engine Reason: </span>
-            {assessment.reason}
+        {/* Plain Language Explanation Section */}
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-teal-50/40 border border-teal-200/80 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-teal-100">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
+                ?
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-950">
+                  Why is this order {assessment.status === 'AT_RISK' ? 'at risk' : assessment.status === 'OVERDUE' ? 'overdue' : assessment.status === 'ON_TRACK' ? 'on track' : 'flagged'}? (Plain English)
+                </h2>
+                <p className="text-[11px] text-slate-500">
+                  Direct translation of the deterministic factory rate math
+                </p>
+              </div>
+            </div>
+            <StatusBadge type="radar" value={assessment.status} />
           </div>
 
+          <div className="text-xs text-slate-700 leading-relaxed space-y-2">
+            {assessment.status === 'AT_RISK' && (
+              <p className="bg-white/90 p-3.5 rounded-xl border border-teal-200/70 text-slate-800">
+                At the current assigned speed of <strong className="font-mono text-slate-900">{assessment.rate?.value} {assessment.unit}/day</strong>, completing the remaining <strong className="font-mono text-slate-900">{assessment.remainingQuantity?.toLocaleString()} {assessment.unit}</strong> will take <strong className="font-mono text-amber-700">{assessment.estimatedProductionDays} working days</strong>. However, only <strong className="font-mono text-slate-900">{assessment.availableProductionDays} working days</strong> remain until the deadline ({assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString('en-US') : 'N/A'}).
+                <span className="block mt-1 font-semibold text-rose-700">
+                  → Production is running {assessment.daysLate ? `${assessment.daysLate} days` : 'critically'} behind schedule.
+                </span>
+              </p>
+            )}
+
+            {assessment.status === 'ON_TRACK' && (
+              <p className="bg-white/90 p-3.5 rounded-xl border border-emerald-200/70 text-slate-800">
+                Production is progressing smoothly on schedule. Producing the remaining <strong className="font-mono text-slate-900">{assessment.remainingQuantity?.toLocaleString()} {assessment.unit}</strong> at <strong className="font-mono text-slate-900">{assessment.rate?.value} {assessment.unit}/day</strong> requires <strong className="font-mono text-emerald-700">{assessment.estimatedProductionDays} days</strong>, which fits safely within the <strong className="font-mono text-slate-900">{assessment.availableProductionDays} days</strong> available before deadline ({assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString('en-US') : 'N/A'}).
+                <span className="block mt-1 font-semibold text-emerald-700">
+                  → Buffer cushion: {assessment.slackDays ? `${assessment.slackDays} days of slack buffer` : 'Adequate buffer'}.
+                </span>
+              </p>
+            )}
+
+            {assessment.status === 'OVERDUE' && (
+              <p className="bg-white/90 p-3.5 rounded-xl border border-rose-200/70 text-slate-800">
+                The agreed delivery due date ({assessment.dueDate ? new Date(assessment.dueDate).toLocaleDateString('en-US') : 'N/A'}) has passed, but <strong className="font-mono text-rose-700">{assessment.remainingQuantity?.toLocaleString()} {assessment.unit}</strong> still remains to be woven and finished.
+              </p>
+            )}
+
+            {assessment.status === 'COMPLETED' && (
+              <p className="bg-white/90 p-3.5 rounded-xl border border-blue-200/70 text-slate-800">
+                This order is 100% completed. All {assessment.requiredQuantity?.toLocaleString()} {assessment.unit} have been produced and verified through quality gates.
+              </p>
+            )}
+
+            {assessment.status === 'INSUFFICIENT_DATA' && (
+              <p className="bg-white/90 p-3.5 rounded-xl border border-amber-200/70 text-slate-800">
+                {assessment.reason || 'Missing order parameters (e.g., machine workcenter assignment or production speed) prevent calculating delivery schedule.'}
+              </p>
+            )}
+          </div>
+
+          {/* Actionable Next Step Box */}
           {assessment.suggestedAction && (
-            <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900 flex items-start gap-2.5">
-              <Zap className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-teal-800">Suggested Action ({assessment.suggestedAction.code}): </strong>
+            <div className="p-3.5 rounded-xl bg-white border border-teal-300/80 shadow-2xs space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-900">
+                <Zap className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                <span>Actionable Next Step ({assessment.suggestedAction.code}):</span>
+              </div>
+              <p className="text-xs text-slate-700">
                 {assessment.suggestedAction.text}
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Link
+                  to={`/orders/${assessment.orderNumber}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-2xs transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Update Order Capacity / Assign Loom</span>
+                </Link>
+                <Link
+                  to="/machines"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
+                >
+                  <Cpu className="w-3.5 h-3.5 text-slate-500" />
+                  <span>View Machine Workcenters</span>
+                </Link>
               </div>
             </div>
           )}
@@ -204,8 +273,8 @@ export const RadarExplainPanel = () => {
 
         {/* Warnings */}
         {assessment.warnings && assessment.warnings.length > 0 && (
-          <div className="space-y-2 pt-2">
-            <span className="text-[11px] font-bold uppercase text-amber-700 tracking-wider">Active Warnings</span>
+          <div className="space-y-2 pt-1">
+            <span className="text-[11px] font-bold uppercase text-amber-700 tracking-wider">Active Schedule Warnings</span>
             <div className="space-y-1.5">
               {assessment.warnings.map((w, idx) => (
                 <div

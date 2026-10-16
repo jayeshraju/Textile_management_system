@@ -240,9 +240,21 @@ export const Dashboard = () => {
                   </div>
                   <p className="text-xs text-slate-700 font-medium mb-3">{order.fabricType}</p>
                   {order.reason && (
-                    <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-800 mb-3 flex items-start gap-2">
-                      <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-rose-600" />
-                      <span>{order.reason}</span>
+                    <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/90 text-xs text-amber-900 mb-3 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-700" />
+                        <span>{order.reason}</span>
+                      </div>
+                      <div className="pl-5 text-[11px] font-semibold text-teal-800 flex items-center gap-1.5 pt-0.5">
+                        <span className="bg-teal-100/80 text-teal-900 px-1.5 py-0.2 rounded text-[10px] uppercase font-bold">Next Step:</span>
+                        <span className="font-medium text-slate-700">
+                          {order.delayStatus === 'OVERDUE'
+                            ? 'Expedite final stage or notify buyer for priority freight'
+                            : order.delayStatus === 'AT_RISK'
+                            ? 'Reallocate order to high-capacity loom or schedule extra shift'
+                            : 'Review machine workcenter assignment in order specification'}
+                        </span>
+                      </div>
                     </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200 text-xs">
@@ -366,29 +378,43 @@ export const Dashboard = () => {
               {stockWarnings.map((item) => (
                 <div
                   key={item._id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2 hover:border-slate-300 transition-colors"
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-slate-900">{item.sku}</span>
-                      <span className="text-slate-700 font-semibold truncate max-w-[180px]">{item.name}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-600 mt-1 flex items-center gap-3">
-                      <span>
-                        Stock: <strong className="text-slate-900 font-mono font-semibold">{formatNumber(item.quantityOnHand)} {item.unit}</strong>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        Reorder: <strong className="text-slate-700 font-mono">{formatNumber(item.reorderLevel)} {item.unit}</strong>
-                      </span>
-                      {item.shortfall > 0 && (
-                        <span className="text-rose-700 font-bold">
-                          (Shortfall: -{formatNumber(item.shortfall)} {item.unit})
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-slate-900">{item.sku}</span>
+                        <span className="text-slate-700 font-semibold truncate max-w-[180px]">{item.name}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 mt-1 flex items-center gap-3">
+                        <span>
+                          Stock: <strong className="text-slate-900 font-mono font-semibold">{formatNumber(item.quantityOnHand)} {item.unit}</strong>
                         </span>
-                      )}
+                        <span>•</span>
+                        <span>
+                          Reorder: <strong className="text-slate-700 font-mono">{formatNumber(item.reorderLevel)} {item.unit}</strong>
+                        </span>
+                        {item.shortfall > 0 && (
+                          <span className="text-rose-700 font-bold">
+                            (Shortfall: -{formatNumber(item.shortfall)} {item.unit})
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <StatusBadge type="stock" value={item.stockLevel} />
                   </div>
-                  <StatusBadge type="stock" value={item.stockLevel} />
+                  <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                    <span className="text-teal-800 font-medium">
+                      Next Step: Reorder +{formatNumber(item.shortfall > 0 ? item.shortfall : item.reorderLevel)} {item.unit} to restore buffer
+                    </span>
+                    <Link
+                      to="/stock"
+                      className="font-bold text-teal-700 hover:text-teal-800 hover:underline flex items-center gap-0.5"
+                    >
+                      <span>Reorder</span>
+                      <ArrowUpRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

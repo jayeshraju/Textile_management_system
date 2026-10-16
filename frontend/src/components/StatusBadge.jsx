@@ -6,14 +6,25 @@ import React from 'react';
  * Supports Order statuses, Delay flags, Machine operational states, Stock alerts,
  * Quality inspection grades, Quality stages, CAPA statuses, and Dispatch lifecycle states.
  */
-export const StatusBadge = ({ type = 'order', value, className = '' }) => {
-  if (!value) return null;
+export const StatusBadge = ({ type = 'order', value, status, className = '' }) => {
+  const actualValue = value !== undefined ? value : status;
+  if (!actualValue) return null;
 
-  const normalized = String(value).toUpperCase();
+  const normalized = String(actualValue).toUpperCase();
+
+  // Auto-detect type if generic or mismatched
+  let resolvedType = type;
+  if (type === 'order') {
+    if (['OK', 'LOW', 'OUT'].includes(normalized)) {
+      resolvedType = 'stock';
+    } else if (['ON_TRACK', 'AT_RISK', 'OVERDUE', 'DELAYED', 'INSUFFICIENT_DATA'].includes(normalized)) {
+      resolvedType = 'delay';
+    }
+  }
 
   const getBadgeConfig = () => {
     // 1. Quality Inspection Status / Verdict
-    if (type === 'quality' || type === 'qualityStatus') {
+    if (resolvedType === 'quality' || resolvedType === 'qualityStatus') {
       switch (normalized) {
         case 'PASS':
           return { label: 'PASS', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' };
@@ -28,7 +39,7 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
     }
 
     // 2. Stage Badges (GREY, DYEING, FINISHING, FINAL)
-    if (type === 'stage') {
+    if (resolvedType === 'stage') {
       switch (normalized) {
         case 'GREY':
           return { label: '1. Grey Weave', bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-300', dot: 'bg-slate-500' };
@@ -39,12 +50,12 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
         case 'FINAL':
           return { label: '4. Final QC', bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', dot: 'bg-teal-500' };
         default:
-          return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+          return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
       }
     }
 
     // 3. Corrective Action (CAPA) Statuses
-    if (type === 'actionStatus' || type === 'caStatus') {
+    if (resolvedType === 'actionStatus' || resolvedType === 'caStatus') {
       switch (normalized) {
         case 'OPEN':
           return { label: 'Open', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-500 animate-pulse' };
@@ -55,12 +66,12 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
         case 'VERIFIED':
           return { label: 'Verified & Closed', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' };
         default:
-          return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+          return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
       }
     }
 
     // 4. Alert Severity
-    if (type === 'severity') {
+    if (resolvedType === 'severity') {
       switch (normalized) {
         case 'CRITICAL':
           return { label: 'CRITICAL', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', dot: 'bg-rose-500 animate-ping' };
@@ -72,12 +83,12 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
         case 'MAJOR':
           return { label: 'MAJOR', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-500' };
         default:
-          return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+          return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
       }
     }
 
     // 5. Dispatch Lifecycle Status
-    if (type === 'dispatch' || type === 'dispatchStatus') {
+    if (resolvedType === 'dispatch' || resolvedType === 'dispatchStatus') {
       switch (normalized) {
         case 'DISPATCHED':
           return { label: 'Dispatched', bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', dot: 'bg-sky-500' };
@@ -90,7 +101,7 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
     }
 
     // 6. Order Statuses
-    if (type === 'order') {
+    if (resolvedType === 'order') {
       switch (normalized) {
         case 'IN_PROGRESS':
           return { label: 'In Progress', bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', dot: 'bg-teal-500 animate-pulse' };
@@ -103,12 +114,12 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
         case 'CANCELLED':
           return { label: 'Cancelled', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', dot: 'bg-rose-500' };
         default:
-          return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+          return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
       }
     }
 
     // 7. Delay & Radar Statuses
-    if (type === 'delay' || type === 'radar') {
+    if (resolvedType === 'delay' || resolvedType === 'radar') {
       switch (normalized) {
         case 'OVERDUE':
         case 'DELAYED':
@@ -128,7 +139,7 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
     }
 
     // 8. Machine States
-    if (type === 'machine') {
+    if (resolvedType === 'machine') {
       switch (normalized) {
         case 'RUNNING':
           return { label: 'Busy (Running)', bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', dot: 'bg-teal-500 animate-pulse' };
@@ -141,12 +152,12 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
         case 'OFFLINE':
           return { label: 'Offline', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', dot: 'bg-rose-500' };
         default:
-          return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+          return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
       }
     }
 
     // 9. Stock Levels
-    if (type === 'stock') {
+    if (resolvedType === 'stock') {
       switch (normalized) {
         case 'OUT':
           return { label: 'Out of Stock', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', dot: 'bg-rose-500 animate-pulse' };
@@ -155,11 +166,11 @@ export const StatusBadge = ({ type = 'order', value, className = '' }) => {
         case 'OK':
           return { label: 'Healthy', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' };
         default:
-          return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+          return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
       }
     }
 
-    return { label: value, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
+    return { label: actualValue, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', dot: 'bg-slate-400' };
   };
 
   const config = getBadgeConfig();
